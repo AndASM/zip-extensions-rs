@@ -1,4 +1,6 @@
-# zip-extensions-rs
+# zip-extensions-rs - AndASM Fork
+
+Forked to update to latest version, and make functions accept `Path` as well as `&PathBuf`.
 
 ![Rust](https://github.com/matzefriedrich/zip-extensions-rs/workflows/Rust/badge.svg)
 [![Build status](https://ci.appveyor.com/api/projects/status/41lavncr30iyv5rk/branch/master?svg=true)](https://ci.appveyor.com/project/matzefriedrich/zip-extensions-rs/branch/master)
