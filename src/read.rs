@@ -10,6 +10,8 @@ use zip::ZipArchive;
 use crate::file_utils::file_write_all_bytes;
 
 /// Extracts a ZIP file to the given directory.
+/// # Errors
+/// Will return `ZipError` for relevant file io error on archive or directory.
 pub fn zip_extract<P1: AsRef<Path>, P2: AsRef<Path>>(
     archive_file: P1,
     target_dir: P2,
@@ -20,6 +22,8 @@ pub fn zip_extract<P1: AsRef<Path>, P2: AsRef<Path>>(
 }
 
 /// Extracts and entry in the ZIP archive to the given directory.
+/// # Errors
+/// Will return `ZipError` for relevant file io error on archive or directory.
 pub fn zip_extract_file<P1: AsRef<Path>, P2: AsRef<Path>, P3: AsRef<Path>>(
     archive_file: P1,
     entry_path: P2,
@@ -37,6 +41,8 @@ pub fn zip_extract_file<P1: AsRef<Path>, P2: AsRef<Path>, P3: AsRef<Path>>(
 }
 
 /// Extracts an entry in the ZIP archive to the given memory buffer.
+/// # Errors
+/// Will return `ZipError` for relevant file io error on archive.
 pub fn zip_extract_file_to_memory<P1: AsRef<Path>, P2: AsRef<Path>>(
     archive_file: P1,
     entry_path: P2,
@@ -52,6 +58,8 @@ pub fn zip_extract_file_to_memory<P1: AsRef<Path>, P2: AsRef<Path>>(
 }
 
 /// Determines whether the specified file is a ZIP file, or not.
+/// # Errors
+/// Will return `ZipError` for relevant file io error on archive.
 pub fn try_is_zip<P: AsRef<Path>>(file: P) -> ZipResult<bool> {
     const ZIP_SIGNATURE: [u8; 2] = [0x50, 0x4b];
     const ZIP_ARCHIVE_FORMAT: [u8; 6] = [0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
@@ -81,9 +89,13 @@ pub fn is_zip<P: AsRef<Path>>(file: P) -> bool {
 
 pub trait ZipArchiveExtensions {
     /// Extracts the current archive to the given directory path.
+    /// # Errors
+    /// Will return `ZipError` for relevant file io error on archive or directory.
     fn extract<P: AsRef<Path>>(&mut self, path: P) -> ZipResult<()>;
 
     /// Extracts an entry in the zip archive to a file.
+    /// # Errors
+    /// Will return `ZipError` for relevant file io error on archive or directory.
     fn extract_file<P: AsRef<Path>>(
         &mut self,
         file_number: usize,
@@ -92,10 +104,14 @@ pub trait ZipArchiveExtensions {
     ) -> ZipResult<()>;
 
     /// Extracts an entry in the ZIP archive to the given memory buffer.
+    /// # Errors
+    /// Will return `ZipError` for relevant file io error on archive.
     fn extract_file_to_memory(&mut self, file_number: usize, buffer: &mut Vec<u8>)
         -> ZipResult<()>;
 
     /// Gets an entry´s path.
+    /// # Errors
+    /// Will return `ZipError` for relevant file io error on archive.
     fn entry_path(&mut self, file_number: usize) -> ZipResult<PathBuf>;
 
     /// Finds the index of the specified entry.
@@ -113,7 +129,7 @@ impl<R: Read + io::Seek> ZipArchiveExtensions for ZipArchive<R> {
         }
 
         for file_number in 0..self.len() {
-            let mut next: ZipFile = self.by_index(file_number)?;
+            let mut next: ZipFile<'_> = self.by_index(file_number)?;
             let sanitized_name = next.sanitized_name();
             if next.is_dir() {
                 let extracted_folder_path = target_directory.as_ref().join(sanitized_name);
@@ -150,7 +166,7 @@ impl<R: Read + io::Seek> ZipArchiveExtensions for ZipArchive<R> {
         file_number: usize,
         buffer: &mut Vec<u8>,
     ) -> ZipResult<()> {
-        let mut next: ZipFile = self.by_index(file_number)?;
+        let mut next: ZipFile<'_> = self.by_index(file_number)?;
         if next.is_file() {
             let _bytes_read = next.read_to_end(buffer)?;
             return Ok(());
@@ -162,7 +178,7 @@ impl<R: Read + io::Seek> ZipArchiveExtensions for ZipArchive<R> {
     }
 
     fn entry_path(&mut self, file_number: usize) -> ZipResult<PathBuf> {
-        let next: ZipFile = self.by_index(file_number)?;
+        let next: ZipFile<'_> = self.by_index(file_number)?;
         Ok(next.sanitized_name())
     }
 

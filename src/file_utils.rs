@@ -22,17 +22,17 @@ pub(crate) fn make_relative_path<P1: AsRef<Path>, P2: AsRef<Path>>(
     current: P2,
 ) -> PathBuf {
     let mut result = PathBuf::new();
-    let root_components = root.as_ref().components().collect::<Vec<Component>>();
+    let root_components = root.as_ref().components().collect::<Vec<Component<'_>>>();
     let current_components = current.as_ref().components().collect::<Vec<_>>();
     for i in 0..current_components.len() {
-        let current_path_component: Component = current_components[i];
+        let current_path_component: Component<'_> = current_components[i];
         if i < root_components.len() {
-            let other: Component = root_components[i];
+            let other: Component<'_> = root_components[i];
             if other != current_path_component {
                 break;
             }
         } else {
-            result.push(current_path_component)
+            result.push(current_path_component);
         }
     }
     result
